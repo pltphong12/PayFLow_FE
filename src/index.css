@@ -1,111 +1,423 @@
+/* ================================================================
+ * PayFlow — Global Styles
+ * Design system: MASTER.md (Minimalism & Swiss Style)
+ * Typography: IBM Plex Sans
+ * Responsive: 375px / 768px / 1024px / 1440px
+ * ================================================================ */
+
+/* ---- Design tokens as CSS variables ---- */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    --color-primary: #F59E0B;
+    --color-on-primary: #0F172A;
+    --color-secondary: #FBBF24;
+    --color-accent: #8B5CF6;
+    --color-on-accent: #000000;
+    --color-background: #0F172A;
+    --color-foreground: #F8FAFC;
+    --color-card: #222735;
+    --color-card-foreground: #F8FAFC;
+    --color-muted: #272F42;
+    --color-muted-foreground: #94A3B8;
+    --color-border: #334155;
+    --color-destructive: #EF4444;
+    --color-ring: #F59E0B;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+    /* Spacing tokens */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 body {
-  margin: 0;
+    margin: 0;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+        Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+#root {
+    min-height: 100vh;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+/* ---- Focus states — visible for keyboard nav (a11y) ---- */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* ---- Smooth transitions — respect reduced-motion ---- */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* ---- Antd overrides — match design system tokens ---- */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+    background-color: var(--color-accent) !important;
+    border-color: var(--color-accent) !important;
+}
+
+/* ---- Clickable elements — cursor:pointer per MASTER.md ---- */
+button,
+a,
+[role="button"],
+.ant-btn,
+.ant-checkbox-wrapper {
+    cursor: pointer;
+}
+
+/* ================================================================
+ * AUTH LAYOUT — Responsive 2-column → stacked
+ * ================================================================ */
+
+.auth-wrapper {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ---- Left panel (branding) ---- */
+.auth-left {
+    flex: 0 0 480px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-2xl);
+    background: var(--color-background);
+    color: var(--color-foreground);
+}
+
+.auth-left__grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+}
+
+.auth-left__accent-line {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg,
+            transparent 0%,
+            var(--color-primary) 30%,
+            var(--color-accent) 70%,
+            transparent 100%);
+    opacity: 0.6;
+}
+
+.auth-left__content {
+    position: relative;
+    z-index: 1;
+}
+
+.auth-left__copyright {
+    position: absolute;
+    bottom: 28px;
+    left: var(--space-2xl);
+    color: var(--color-muted-foreground);
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+/* ---- Right panel (form) ---- */
+.auth-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.auth-right__container {
+    width: 100%;
+    max-width: 420px;
+}
+
+/* ---- Logo ---- */
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: var(--space-2xl);
+}
+
+.auth-logo__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.auth-logo__text {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-foreground);
+    letter-spacing: -0.02em;
+}
+
+/* ---- Headline ---- */
+.auth-headline {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 var(--space-md);
+    color: var(--color-foreground);
+    letter-spacing: -0.025em;
+}
+
+.auth-headline__accent {
+    color: var(--color-primary);
+}
+
+.auth-sub-headline {
+    color: var(--color-muted-foreground);
+    font-size: 15px;
+    line-height: 1.7;
+    margin: 0 0 var(--space-2xl);
+}
+
+/* ---- Metrics ---- */
+.auth-metrics {
+    display: flex;
+    gap: var(--space-xl);
+    margin-bottom: 40px;
+}
+
+.auth-metric__value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: -0.02em;
+}
+
+.auth-metric__label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+}
+
+/* ---- Badges ---- */
+.auth-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.auth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--color-muted);
+    border: 1px solid var(--color-border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+}
+
+/* ---- Mobile logo strip (visible only on mobile) ---- */
+.auth-mobile-header {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-background);
+}
+
+.auth-mobile-header__text {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-foreground);
+    letter-spacing: -0.02em;
+}
+
+/* ================================================================
+ * RESPONSIVE BREAKPOINTS (per MASTER.md)
+ * ================================================================ */
+
+/* ---- Tablet portrait (< 1024px) ---- */
+@media (max-width: 1024px) {
+    .auth-left {
+        flex: 0 0 380px;
+        padding: var(--space-xl);
+    }
+
+    .auth-left__copyright {
+        left: var(--space-xl);
+    }
+
+    .auth-headline {
+        font-size: 28px;
+    }
+
+    .auth-sub-headline {
+        font-size: 14px;
+        margin-bottom: var(--space-xl);
+    }
+
+    .auth-metrics {
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    .auth-metric__value {
+        font-size: 20px;
+    }
+
+    .auth-logo {
+        margin-bottom: var(--space-xl);
+    }
+}
+
+/* ---- Mobile / Tablet small (< 768px) ---- */
+@media (max-width: 768px) {
+    .auth-wrapper {
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* Hide full branding panel */
+    .auth-left {
+        display: none;
+    }
+
+    /* Show compact mobile header */
+    .auth-mobile-header {
+        display: flex;
+    }
+
+    .auth-right {
+        flex: 1;
+        padding: var(--space-xl) var(--space-lg);
+        align-items: flex-start;
+        padding-top: var(--space-lg);
+    }
+
+    .auth-right__container {
+        max-width: 100%;
+    }
+}
+
+/* ---- Small phone (< 375px) ---- */
+@media (max-width: 375px) {
+    .auth-right {
+        padding: var(--space-md);
+    }
+
+    .auth-mobile-header {
+        padding: var(--space-sm) var(--space-md);
+    }
+}
+
+/* ================================================================
+ * LOGIN FORM — Responsive adjustments
+ * ================================================================ */
+
+.login-form-header__title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    letter-spacing: -0.025em;
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.login-form-header__subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.login-social-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 200ms ease;
+    font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.login-social-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.login-social-btn:active {
+    transform: scale(0.98);
+}
+
+@media (max-width: 768px) {
+    .login-form-header__title {
+        font-size: 24px;
+    }
+
+    .login-form-header__subtitle {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 375px) {
+    .login-form-header__title {
+        font-size: 22px;
+    }
 }

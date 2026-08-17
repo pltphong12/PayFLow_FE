@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .agents/
+folder_tree.txt
+.design-system/*
+.env
