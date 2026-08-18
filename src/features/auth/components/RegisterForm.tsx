@@ -4,7 +4,6 @@ import {
     Form,
     Input,
     Button,
-    Checkbox,
     Divider,
     Alert,
     message,
@@ -12,17 +11,23 @@ import {
 import {
     MailOutlined,
     LockOutlined,
+    UserOutlined,
 } from '@ant-design/icons';
 
 import authApi from '../services/authApi';
 import { saveAuth } from '../../../stores/authStore';
 
-import type { LoginRequest } from '../types/auth.types';
+import type { RegisterRequest } from '../types/auth.types';
 import type { AxiosError } from 'axios';
 import type { ApiResponse } from '../../../types/api.types';
 
+/** Form values bao gồm cả confirmPassword (chỉ dùng phía client) */
+interface RegisterFormValues extends RegisterRequest {
+    confirmPassword: string;
+}
+
 /* ================================================================
- *  LoginForm — PayFlow Login
+ *  RegisterForm — PayFlow Registration
  *
  *  Design system: PayFlow MASTER.md
  *  - Primary:  #F59E0B (Gold trust)  → focus ring
@@ -31,76 +36,104 @@ import type { ApiResponse } from '../../../types/api.types';
  *  - Responsive: 375px / 768px / 1024px (via CSS classes)
  *
  *  UX compliance (ux-guidelines):
- *  - autocomplete="current-password" → allow paste & password managers
+ *  - autocomplete="new-password" → allow paste & password managers
  *  - Loading → success/error feedback
  *  - Proper <label> via Antd Form (not placeholder-only)
+ *  - Password min 8 chars (khớp backend @Size(min=8, max=100))
+ *  - 409 conflict → email đã tồn tại
  * ================================================================ */
-export default function LoginForm() {
-    const [form] = Form.useForm<LoginRequest>();
+export default function RegisterForm() {
+    const [form] = Form.useForm<RegisterFormValues>();
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const navigate = useNavigate();
 
     /* ---------- Submit handler ---------- */
-    const onFinish = async (values: LoginRequest) => {
+    const onFinish = async (values: RegisterFormValues) => {
         setLoading(true);
         setErrorMsg(null);
 
         try {
-            /* Bước 1: Gọi API đăng nhập, lấy token */
-            const res = await authApi.login(values);
-            const body = res.data;
+            /* Bước 1: Gọi API đăng ký */
+            const regRes = await authApi.register({
+                email: values.email,
+                password: values.password,
+                fullName: values.fullName,
+            });
+            const regBody = regRes.data;
 
-            if (!body.success) {
-                setErrorMsg(body.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+            if (!regBody.success) {
+                setErrorMsg(regBody.message || 'Đăng ký thất bại. Vui lòng thử lại.');
                 return;
             }
 
-            const authData = body.data;
+            /* Bước 2: Đăng ký thành công → tự động login ngầm */
+            let authData;
+            try {
+                const loginRes = await authApi.login({
+                    email: values.email,
+                    password: values.password,
+                });
+                const loginBody = loginRes.data;
 
-            /* Bước 2: Lưu tạm access token NGAY vào localStorage
-             * để axios interceptor gắn được Authorization header
-             * cho request getCurrentUser tiếp theo. */
+                if (!loginBody.success) {
+                    // Register OK nhưng login fail → hướng dẫn login thủ công
+                    message.success('Đăng ký thành công! Vui lòng đăng nhập.');
+                    navigate('/login', { replace: true });
+                    return;
+                }
+                authData = loginBody.data;
+            } catch {
+                // Register OK nhưng login fail → hướng dẫn login thủ công
+                message.success('Đăng ký thành công! Vui lòng đăng nhập.');
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            /* Bước 3: Lưu tạm access token NGAY để interceptor dùng được */
             localStorage.setItem('access_token', authData.accessToken);
 
-            /* Bước 3: Gọi GET /users/me lấy thông tin user (role, email, fullName) */
+            /* Bước 4: Gọi GET /users/me lấy thông tin user đầy đủ */
             let userProfile;
             try {
                 const userRes = await authApi.getCurrentUser();
                 if (!userRes.data.success) {
-                    setErrorMsg('Không thể lấy thông tin người dùng. Vui lòng thử lại.');
+                    // Fallback: dùng thông tin từ register response
+                    message.success('Đăng ký thành công! Vui lòng đăng nhập.');
                     localStorage.removeItem('access_token');
+                    navigate('/login', { replace: true });
                     return;
                 }
                 userProfile = userRes.data.data;
             } catch {
-                setErrorMsg('Không thể lấy thông tin người dùng. Vui lòng thử lại.');
+                message.success('Đăng ký thành công! Vui lòng đăng nhập.');
                 localStorage.removeItem('access_token');
+                navigate('/login', { replace: true });
                 return;
             }
 
-            /* Bước 4: Lưu đầy đủ auth + user vào store */
+            /* Bước 5: Lưu đầy đủ auth + user vào store (remember=false cho register) */
             const userInfo = {
                 id: userProfile.id,
                 email: userProfile.email,
                 fullName: userProfile.fullName,
                 role: userProfile.role,
             };
-            saveAuth(authData, userInfo, values.remember);
-            message.success('Đăng nhập thành công!');
+            saveAuth(authData, userInfo, false);
+            message.success('Đăng ký thành công! Chào mừng bạn đến với PayFlow.');
 
-            /* Bước 5: Điều hướng theo role
-             * - USER  → /wallet
-             * - ADMIN (và MERCHANT khi mở rộng) → /portal/dashboard */
-            if (userProfile.role === 'USER') {
-                navigate('/wallet', { replace: true });
-            } else {
-                navigate('/portal/dashboard', { replace: true });
-            }
+            /* Bước 6: Điều hướng vào /wallet (register luôn tạo role USER) */
+            navigate('/wallet', { replace: true });
         } catch (err: unknown) {
             const axiosErr = err as AxiosError<ApiResponse>;
+            const status = axiosErr.response?.status;
             const serverMsg = axiosErr.response?.data?.message;
-            setErrorMsg(serverMsg || 'Không thể kết nối máy chủ. Vui lòng thử lại sau.');
+
+            if (status === 409) {
+                setErrorMsg('Email đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.');
+            } else {
+                setErrorMsg(serverMsg || 'Không thể kết nối máy chủ. Vui lòng thử lại sau.');
+            }
         } finally {
             setLoading(false);
         }
@@ -110,9 +143,9 @@ export default function LoginForm() {
         <div>
             {/* ---- Header ---- */}
             <div style={{ marginBottom: 32 }}>
-                <h2 className="login-form-header__title">Đăng nhập</h2>
+                <h2 className="login-form-header__title">Đăng ký tài khoản</h2>
                 <p className="login-form-header__subtitle">
-                    Nhập thông tin tài khoản để tiếp tục.
+                    Tạo tài khoản PayFlow để bắt đầu sử dụng.
                 </p>
             </div>
 
@@ -131,13 +164,30 @@ export default function LoginForm() {
             {/* ---- Form ---- */}
             <Form
                 form={form}
-                name="login"
+                name="register"
                 layout="vertical"
                 onFinish={onFinish}
                 autoComplete="on"
                 requiredMark={false}
                 size="large"
             >
+                {/* Họ tên */}
+                <Form.Item
+                    name="fullName"
+                    label={<span style={styles.label}>Họ tên</span>}
+                    rules={[
+                        { required: true, message: 'Vui lòng nhập họ tên!' },
+                        { min: 2, message: 'Họ tên tối thiểu 2 ký tự!' },
+                    ]}
+                >
+                    <Input
+                        prefix={<UserOutlined style={styles.inputIcon} />}
+                        placeholder="Nguyễn Văn A"
+                        autoComplete="name"
+                        style={styles.input}
+                    />
+                </Form.Item>
+
                 {/* Email */}
                 <Form.Item
                     name="email"
@@ -155,39 +205,57 @@ export default function LoginForm() {
                     />
                 </Form.Item>
 
-                {/* Password — autocomplete="current-password" per UX guideline */}
+                {/* Mật khẩu */}
                 <Form.Item
                     name="password"
                     label={<span style={styles.label}>Mật khẩu</span>}
                     rules={[
                         { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                        { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' },
+                        { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự!' },
                     ]}
+                    extra={
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                            Mật khẩu phải có ít nhất 8 ký tự
+                        </span>
+                    }
                 >
                     <Input.Password
                         prefix={<LockOutlined style={styles.inputIcon} />}
                         placeholder="Nhập mật khẩu"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
                         style={styles.input}
                     />
                 </Form.Item>
 
-                {/* Remember + Forgot */}
-                <Form.Item style={{ marginBottom: 24 }}>
-                    <div style={styles.utilRow}>
-                        <Form.Item name="remember" valuePropName="checked" noStyle>
-                            <Checkbox>
-                                <span style={styles.checkboxLabel}>Ghi nhớ đăng nhập</span>
-                            </Checkbox>
-                        </Form.Item>
-                        <Link to="/forgot-password" style={styles.forgotLink}>
-                            Quên mật khẩu?
-                        </Link>
-                    </div>
+                {/* Xác nhận mật khẩu */}
+                <Form.Item
+                    name="confirmPassword"
+                    label={<span style={styles.label}>Xác nhận mật khẩu</span>}
+                    dependencies={['password']}
+                    rules={[
+                        { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!value || getFieldValue('password') === value) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject(
+                                    new Error('Mật khẩu xác nhận không khớp!'),
+                                );
+                            },
+                        }),
+                    ]}
+                >
+                    <Input.Password
+                        prefix={<LockOutlined style={styles.inputIcon} />}
+                        placeholder="Nhập lại mật khẩu"
+                        autoComplete="new-password"
+                        style={styles.input}
+                    />
                 </Form.Item>
 
-                {/* Submit — Accent/CTA color per design system */}
-                <Form.Item style={{ marginBottom: 16 }}>
+                {/* Submit */}
+                <Form.Item style={{ marginBottom: 16, marginTop: 8 }}>
                     <Button
                         type="primary"
                         htmlType="submit"
@@ -195,7 +263,7 @@ export default function LoginForm() {
                         loading={loading}
                         style={styles.submitBtn}
                     >
-                        Đăng nhập
+                        Đăng ký
                     </Button>
                 </Form.Item>
             </Form>
@@ -205,7 +273,7 @@ export default function LoginForm() {
                 <span style={{ fontSize: 12, color: '#94a3b8' }}>hoặc tiếp tục với</span>
             </Divider>
 
-            {/* Google OAuth — uses CSS class for hover/active states */}
+            {/* Google OAuth — placeholder */}
             <button type="button" className="login-social-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -228,12 +296,12 @@ export default function LoginForm() {
                 <span>Google</span>
             </button>
 
-            {/* Register link */}
+            {/* Login link */}
             <div style={{ textAlign: 'center', marginTop: 24 }}>
                 <span style={styles.registerText}>
-                    Chưa có tài khoản?{' '}
-                    <Link to="/register" style={styles.registerLink}>
-                        Đăng ký ngay
+                    Đã có tài khoản?{' '}
+                    <Link to="/login" style={styles.registerLink}>
+                        Đăng nhập ngay
                     </Link>
                 </span>
             </div>
@@ -255,20 +323,6 @@ const styles: Record<string, React.CSSProperties> = {
     },
     inputIcon: {
         color: '#94a3b8',
-    },
-    utilRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    checkboxLabel: {
-        fontSize: 13,
-        color: '#475569',
-    },
-    forgotLink: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: 'var(--color-accent)',
     },
     submitBtn: {
         height: 46,

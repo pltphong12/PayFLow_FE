@@ -1,13 +1,24 @@
 import type { AxiosResponse } from 'axios';
+import axios from 'axios';
 import apiClient from '../../../lib/axios';
 import type { ApiResponse } from '../../../types/api.types';
-import type { AuthResponse, LoginRequest } from '../../../types/auth.types';
+import type {
+    AuthResponse,
+    LoginRequest,
+    RegisterRequest,
+    RegisterResponse,
+    UserProfileResponse,
+} from '../types/auth.types';
+import { env } from '../../../config/env';
+
 /* ================================================================
  *  Auth API Service
  * ================================================================ */
+
 /**
  * Gọi API đăng nhập.
  * POST /auth/login
+ * BE sẽ set-cookie HttpOnly refresh token tự động trong response.
  */
 export async function login(
     data: LoginRequest,
@@ -17,5 +28,47 @@ export async function login(
         password: data.password,
     });
 }
-const authApi = { login };
+
+/**
+ * Gọi API đăng ký tài khoản mới.
+ * POST /auth/register
+ */
+export async function register(
+    data: RegisterRequest,
+): Promise<AxiosResponse<ApiResponse<RegisterResponse>>> {
+    return apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', {
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
+    });
+}
+
+/**
+ * Lấy thông tin user đang đăng nhập.
+ * GET /users/me
+ */
+export async function getCurrentUser(): Promise<AxiosResponse<ApiResponse<UserProfileResponse>>> {
+    return apiClient.get<ApiResponse<UserProfileResponse>>('/users/me');
+}
+
+/**
+ * Làm mới access token bằng refresh token (HttpOnly cookie).
+ * POST /auth/refresh
+ *
+ * - Dùng axios THUẦN (không qua apiClient) để tránh vòng lặp 401.
+ * - withCredentials: true → browser tự đính kèm HttpOnly cookie.
+ * - Không cần gửi body — BE lấy refresh token từ cookie.
+ */
+export async function refreshToken(): Promise<AxiosResponse<ApiResponse<AuthResponse>>> {
+    return axios.post<ApiResponse<AuthResponse>>(
+        `${env.apiBaseUrl}/auth/refresh`,
+        {},
+        {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+        },
+    );
+}
+
+const authApi = { login, register, getCurrentUser, refreshToken };
 export default authApi;

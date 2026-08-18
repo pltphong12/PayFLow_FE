@@ -52,38 +52,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         <br />
                         — nhanh chóng, an toàn, minh bạch.
                     </p>
-
-                    {/* Trust metrics */}
-                    <div className="auth-metrics">
-                        {trustMetrics.map((m) => (
-                            <div key={m.label}>
-                                <span className="auth-metric__value">{m.value}</span>
-                                <span className="auth-metric__label">{m.label}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Security badges */}
-                    <div className="auth-badges">
-                        {securityBadges.map((b) => (
-                            <div key={b} className="auth-badge">
-                                <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="var(--color-primary)"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                </svg>
-                                <span>{b}</span>
-                            </div>
-                        ))}
-                    </div>
                 </div>
 
                 {/* Bottom copyright */}
@@ -99,12 +67,3 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         </div>
     );
 }
-
-/* ---------- Data ---------- */
-const trustMetrics = [
-    { value: '2M+', label: 'Người dùng' },
-    { value: '99.9%', label: 'Uptime' },
-    { value: '256-bit', label: 'Mã hoá' },
-];
-
-const securityBadges = ['PCI DSS', 'ISO 27001', 'HTTPS/TLS'];

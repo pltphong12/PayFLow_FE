@@ -1,20 +1,48 @@
-import axios from 'axios';
+import axios, { type AxiosRequestConfig } from 'axios';
 import { env } from '../config/env';
 
-/**
- * Axios instance dùng chung cho toàn bộ ứng dụng.
- * - Base URL lấy từ config/env.ts (trỏ API Gateway :8080)
- * - Tự động đính kèm Access Token vào header Authorization
- */
+/* ================================================================
+ *  API Client — Axios instance với auto token refresh
+ *
+ *  withCredentials: true → browser tự gửi HttpOnly cookie (refresh token)
+ *  khi gọi bất kỳ request nào, kể cả cross-origin (cần BE cho phép CORS).
+ *
+ *  Luồng xử lý 401:
+ *  1. Request nhận 401 → gọi POST /auth/refresh (browser tự gửi cookie)
+ *  2. Nếu đang refresh → queue request lại, chờ token mới
+ *  3. Thành công → lưu access token mới → retry tất cả request trong queue
+ *  4. Thất bại    → clearAuth → redirect /login
+ *
+ *  Tránh vòng lặp:
+ *  - refreshToken() dùng axios thuần (không qua apiClient)
+ *  - Request đã retry được đánh dấu _retry=true
+ * ================================================================ */
+
 const apiClient = axios.create({
     baseURL: env.apiBaseUrl,
     timeout: 15_000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    withCredentials: true,              // Browser tự gửi HttpOnly cookie
+    headers: { 'Content-Type': 'application/json' },
 });
 
-/* ---------- Request Interceptor ---------- */
+/* ---- Trạng thái refresh (module-level singleton) ---- */
+let isRefreshing = false;
+type PendingItem = { resolve: (token: string) => void; reject: (err: unknown) => void };
+let pendingQueue: PendingItem[] = [];
+
+function drainQueue(newToken: string) {
+    pendingQueue.forEach(({ resolve }) => resolve(newToken));
+    pendingQueue = [];
+}
+
+function rejectQueue(err: unknown) {
+    pendingQueue.forEach(({ reject }) => reject(err));
+    pendingQueue = [];
+}
+
+/* ================================================================
+ *  Request Interceptor — Gắn Bearer access token
+ * ================================================================ */
 apiClient.interceptors.request.use(
     (config) => {
         const token =
@@ -28,12 +56,68 @@ apiClient.interceptors.request.use(
     (error) => Promise.reject(error),
 );
 
-/* ---------- Response Interceptor ---------- */
+/* ================================================================
+ *  Response Interceptor — 401 → refresh + retry
+ * ================================================================ */
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
-        // Có thể mở rộng xử lý 401 → refresh token ở đây
-        return Promise.reject(error);
+    async (error) => {
+        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+
+        // Chỉ xử lý 401, không retry lần 2
+        if (error.response?.status !== 401 || originalRequest._retry) {
+            return Promise.reject(error);
+        }
+
+        // Nếu đang refresh → queue lại, chờ token mới
+        if (isRefreshing) {
+            return new Promise<string>((resolve, reject) => {
+                pendingQueue.push({ resolve, reject });
+            }).then((newToken) => {
+                if (originalRequest.headers) {
+                    (originalRequest.headers as Record<string, string>).Authorization = `Bearer ${newToken}`;
+                }
+                originalRequest._retry = true;
+                return apiClient(originalRequest);
+            });
+        }
+
+        // Bắt đầu refresh
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+            // Dynamic import để tránh circular dependency
+            const { refreshToken } = await import('../features/auth/services/authApi');
+            const res = await refreshToken();   // Không cần tham số — browser gửi cookie tự động
+
+            if (!res.data.success) throw new Error('Refresh token không hợp lệ');
+
+            const newAccessToken = res.data.data.accessToken;
+
+            // Lưu access token mới
+            const { updateAccessToken } = await import('../stores/authStore');
+            updateAccessToken(newAccessToken);
+
+            // Cập nhật header request gốc
+            if (originalRequest.headers) {
+                (originalRequest.headers as Record<string, string>).Authorization = `Bearer ${newAccessToken}`;
+            }
+
+            // Notify các request đang chờ
+            drainQueue(newAccessToken);
+
+            // Retry request gốc
+            return apiClient(originalRequest);
+        } catch (refreshErr) {
+            rejectQueue(refreshErr);
+            const { clearAuth } = await import('../stores/authStore');
+            clearAuth();
+            window.location.replace('/login');
+            return Promise.reject(refreshErr);
+        } finally {
+            isRefreshing = false;
+        }
     },
 );
 
