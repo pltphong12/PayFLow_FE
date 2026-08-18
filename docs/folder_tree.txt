@@ -1,0 +1,63 @@
+payflow-frontend/
+├── public/
+├── src/
+│   ├── assets/                 # Icons, Logos, QR Scanner frames...
+│   │
+│   ├── components/             # Reusable UI components
+│   │   ├── ui/                 # Button, Input, Modal, Table, Badge, Card, StatBox...
+│   │   ├── layout/             # Các bộ khung giao diện
+│   │   │   ├── CustomerLayout.tsx     # Layout cho User (Bottom Navigation / Header tối giản)
+│   │   │   ├── ManagementLayout.tsx   # Layout chung Admin/Merchant (Sidebar, Topbar, Breadcrumbs)
+│   │   │   └── AuthLayout.tsx         # Layout cho Login / Register
+│   │   └── feedback/           # LoadingSpinner, Toast, ModalConfirm
+│   │
+│   ├── config/
+│   │   └── env.ts              # Base URL trỏ API Gateway (:8080)
+│   │
+│   ├── features/               # Domain Business Modules
+│   │   ├── auth/               # Đăng ký, Đăng nhập, JWT Token
+│   │   │   ├── components/     # LoginForm, RegisterForm, RoleBasedMenu
+│   │   │   ├── services/       # authApi.ts
+│   │   │   └── types/          # auth.types.ts (UserRole: 'USER' | 'MERCHANT' | 'ADMIN')
+│   │   │
+│   │   │── customer/           # [PHẦN 1: CUSTOMER WEB APP]
+│   │   │   ├── wallet/         # Xem số dư, nạp tiền (Topup)
+│   │   │   │   ├── components/ # BalanceCard, TopupModal, TransactionList
+│   │   │   │   └── services/   # walletApi.ts
+│   │   │   ├── transfer/       # Chuyển tiền P2P (Saga)
+│   │   │   │   ├── components/ # TransferForm, TransferConfirmDialog
+│   │   │   │   └── services/   # transferApi.ts
+│   │   │   └── qr-scanner/     # Quét mã QR bằng Camera (html5-qrcode)
+│   │   │       ├── components/ # QRScannerView, PaymentConfirmModal
+│   │   │       └── services/   # qrConfirmApi.ts
+│   │   │
+│   │   ├── merchant/           # [PHẦN 2: MERCHANT MANAGEMENT]
+│   │   │   ├── components/     # QRGeneratorForm, SSEPaymentStatus, RevenueChart
+│   │   │   ├── hooks/          # usePaymentSSE (lắng nghe SSE khi khách thanh toán)
+│   │   │   ├── services/       # merchantApi.ts, qrGenerateApi.ts
+│   │   │   └── types/          # merchant.types.ts
+│   │   │
+│   │   └── admin/              # [PHẦN 3: ADMIN MANAGEMENT]
+│   │       ├── components/     # MerchantApprovalTable, ApproveRejectModal, SystemLogsTable
+│   │       ├── services/       # adminApi.ts
+│   │       └── types/          # admin.types.ts
+│   │
+│   ├── hooks/                  # useDebounce, usePermission, useLocalStorage...
+│   ├── lib/
+│   │   ├── axios.ts            # Axios interceptor gắn JWT + Idempotency-Key
+│   │   └── utils.ts            # Format VND, format date, camera permission helper
+│   │
+│   ├── routes/                 # Định tuyến & Phân quyền
+│   │   ├── AppRoutes.tsx       # Quản lý Router
+│   │   ├── ProtectedRoute.tsx  # Chặn khi chưa login
+│   │   └── RoleGuard.tsx       # Phân quyền truy cập theo USER / MERCHANT / ADMIN
+│   │
+│   ├── stores/
+│   │   └── authStore.ts        # Lưu info user, active role, token
+│   │
+│   ├── types/
+│   │   └── api.types.ts        # Interface ApiResponse<T> chuẩn 5 trường
+│   │
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
