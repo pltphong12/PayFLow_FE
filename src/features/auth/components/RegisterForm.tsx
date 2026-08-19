@@ -182,7 +182,7 @@ export default function RegisterForm() {
                 >
                     <Input
                         prefix={<UserOutlined style={styles.inputIcon} />}
-                        placeholder="Nguyễn Văn A"
+                        placeholder="Nguyễn Văn Anh"
                         autoComplete="name"
                         style={styles.input}
                     />
