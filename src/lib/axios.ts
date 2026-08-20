@@ -64,8 +64,16 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
-        // Chỉ xử lý 401, không retry lần 2
-        if (error.response?.status !== 401 || originalRequest._retry) {
+        // Kiểm tra xem request có phải gửi tới endpoint Auth (login, register, refresh, logout) hay không
+        const url = originalRequest?.url ?? '';
+        const isAuthEndpoint =
+            url.includes('/auth/login') ||
+            url.includes('/auth/register') ||
+            url.includes('/auth/refresh') ||
+            url.includes('/auth/logout');
+
+        // Chỉ xử lý 401 cho các API nghiệp vụ, không áp dụng cho các endpoint Auth hoặc request đã retry
+        if (error.response?.status !== 401 || originalRequest._retry || isAuthEndpoint) {
             return Promise.reject(error);
         }
 
@@ -113,7 +121,10 @@ apiClient.interceptors.response.use(
             rejectQueue(refreshErr);
             const { clearAuth } = await import('../stores/authStore');
             clearAuth();
-            window.location.replace('/login');
+            // Chỉ redirect nếu không ở sẵn các trang login/register
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                window.location.replace('/login');
+            }
             return Promise.reject(refreshErr);
         } finally {
             isRefreshing = false;

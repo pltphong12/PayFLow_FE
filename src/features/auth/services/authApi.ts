@@ -70,5 +70,15 @@ export async function refreshToken(): Promise<AxiosResponse<ApiResponse<AuthResp
     );
 }
 
-const authApi = { login, register, getCurrentUser, refreshToken };
+/**
+ * Gọi API đăng xuất.
+ * POST /auth/logout
+ * BE sẽ xóa HttpOnly cookie refresh token và thu hồi session.
+ */
+export async function logout(): Promise<AxiosResponse<ApiResponse<null>>> {
+    return apiClient.post<ApiResponse<null>>('/auth/logout');
+}
+
+const authApi = { login, register, getCurrentUser, refreshToken, logout };
 export default authApi;
+

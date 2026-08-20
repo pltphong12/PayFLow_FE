@@ -739,3 +739,33 @@ a,
 .customer-bottom-nav__tab {
     position: relative;
 }
+
+/* ================================================================
+ * PROFILE PAGE — Hover states & micro-interactions
+ * ================================================================ */
+
+/* ---- Info row hover ---- */
+.profile-info-row:hover {
+    background: #f8fafc;
+    border-radius: 8px;
+    margin: 0 -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+/* ---- Hero card avatar hover scale ---- */
+.profile-hero-card:hover .profile-avatar-wrap {
+    transform: scale(1.04);
+}
+
+/* ---- Logout button hover state ---- */
+.profile-logout-btn:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.profile-logout-btn:active:not(:disabled) {
+    transform: scale(0.98) !important;
+}

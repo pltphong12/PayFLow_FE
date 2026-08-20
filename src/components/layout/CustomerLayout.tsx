@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Popconfirm } from 'antd';
 import {
     WalletOutlined,
     QrcodeOutlined,
@@ -7,7 +8,8 @@ import {
     UserOutlined,
     LogoutOutlined,
 } from '@ant-design/icons';
-import { clearAuth, getUser } from '../../stores/authStore';
+import { getUser } from '../../stores/authStore';
+import { useLogout } from '../../features/auth/hooks/useLogout';
 
 /* ================================================================
  *  CustomerLayout — Mobile-first wallet app layout
@@ -35,18 +37,14 @@ const NAV_TABS: NavTab[] = [
     { key: 'wallet', label: 'Ví', icon: <WalletOutlined />, path: '/wallet' },
     { key: 'qr-scan', label: 'Quét QR', icon: <QrcodeOutlined />, path: '/qr-scan', disabled: true },
     { key: 'history', label: 'Lịch sử', icon: <HistoryOutlined />, path: '/wallet', disabled: true },
-    { key: 'account', label: 'Tài khoản', icon: <UserOutlined />, path: '/profile', disabled: true },
+    { key: 'account', label: 'Tài khoản', icon: <UserOutlined />, path: '/profile' },
 ];
 
 export default function CustomerLayout({ children }: CustomerLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const user = getUser();
-
-    const handleLogout = () => {
-        clearAuth();
-        navigate('/login', { replace: true });
-    };
+    const { handleLogout, loading } = useLogout();
 
     return (
         <div className="customer-wrapper">
@@ -63,14 +61,24 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                         <span className="customer-header__user">
                             {user?.fullName ?? 'Người dùng'}
                         </span>
-                        <button
-                            type="button"
-                            className="customer-header__logout"
-                            onClick={handleLogout}
+                        <Popconfirm
                             title="Đăng xuất"
+                            description="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?"
+                            onConfirm={handleLogout}
+                            okText="Đăng xuất"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: true, loading }}
+                            placement="bottomRight"
                         >
-                            <LogoutOutlined />
-                        </button>
+                            <button
+                                type="button"
+                                className="customer-header__logout"
+                                title="Đăng xuất"
+                                disabled={loading}
+                            >
+                                <LogoutOutlined />
+                            </button>
+                        </Popconfirm>
                     </div>
                 </div>
             </header>
@@ -83,9 +91,29 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
                     </div>
                     <span className="customer-mobile-header__text">PayFlow</span>
                 </div>
-                <span className="customer-mobile-header__greeting">
-                    Xin chào, {user?.fullName?.split(' ').pop() ?? 'bạn'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span className="customer-mobile-header__greeting">
+                        Xin chào, {user?.fullName?.split(' ').pop() ?? 'bạn'}
+                    </span>
+                    <Popconfirm
+                        title="Đăng xuất"
+                        description="Bạn có chắc chắn muốn đăng xuất?"
+                        onConfirm={handleLogout}
+                        okText="Đăng xuất"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true, loading }}
+                        placement="bottomRight"
+                    >
+                        <button
+                            type="button"
+                            className="customer-header__logout"
+                            title="Đăng xuất"
+                            disabled={loading}
+                        >
+                            <LogoutOutlined />
+                        </button>
+                    </Popconfirm>
+                </div>
             </div>
 
             {/* ---- MAIN CONTENT ---- */}
