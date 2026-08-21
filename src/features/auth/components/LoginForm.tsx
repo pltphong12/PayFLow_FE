@@ -13,6 +13,7 @@ import {
     MailOutlined,
     LockOutlined,
 } from '@ant-design/icons';
+import payflowLogo from '../../../assets/payflow_brand_logo.png';
 
 import authApi from '../services/authApi';
 import { saveAuth } from '../../../stores/authStore';
@@ -23,17 +24,7 @@ import type { ApiResponse } from '../../../types/api.types';
 
 /* ================================================================
  *  LoginForm — PayFlow Login
- *
- *  Design system: PayFlow MASTER.md
- *  - Primary:  #F59E0B (Gold trust)  → focus ring
- *  - Accent:   #8B5CF6 (Purple tech) → CTA button
- *  - Font:     IBM Plex Sans
- *  - Responsive: 375px / 768px / 1024px (via CSS classes)
- *
- *  UX compliance (ux-guidelines):
- *  - autocomplete="current-password" → allow paste & password managers
- *  - Loading → success/error feedback
- *  - Proper <label> via Antd Form (not placeholder-only)
+ *  Design System: PayFlow Financial Core (Stitch)
  * ================================================================ */
 export default function LoginForm() {
     const [form] = Form.useForm<LoginRequest>();
@@ -58,12 +49,10 @@ export default function LoginForm() {
 
             const authData = body.data;
 
-            /* Bước 2: Lưu tạm access token NGAY vào localStorage
-             * để axios interceptor gắn được Authorization header
-             * cho request getCurrentUser tiếp theo. */
+            /* Bước 2: Lưu tạm access token NGAY vào localStorage */
             localStorage.setItem('access_token', authData.accessToken);
 
-            /* Bước 3: Gọi GET /users/me lấy thông tin user (role, email, fullName) */
+            /* Bước 3: Gọi GET /users/me lấy thông tin user */
             let userProfile;
             try {
                 const userRes = await authApi.getCurrentUser();
@@ -89,9 +78,7 @@ export default function LoginForm() {
             saveAuth(authData, userInfo, values.remember);
             message.success('Đăng nhập thành công!');
 
-            /* Bước 5: Điều hướng theo role
-             * - USER  → /wallet
-             * - ADMIN (và MERCHANT khi mở rộng) → /portal/dashboard */
+            /* Bước 5: Điều hướng theo role */
             if (userProfile.role === 'USER') {
                 navigate('/wallet', { replace: true });
             } else {
@@ -108,11 +95,21 @@ export default function LoginForm() {
 
     return (
         <div>
-            {/* ---- Header ---- */}
-            <div style={{ marginBottom: 32 }}>
-                <h2 className="login-form-header__title">Đăng nhập</h2>
-                <p className="login-form-header__subtitle">
-                    Nhập thông tin tài khoản để tiếp tục.
+            {/* ---- Brand Header ---- */}
+            <div className="auth-form-brand">
+                <img
+                    src={payflowLogo}
+                    alt="PayFlow Logo"
+                    style={{
+                        height: 180,
+                        width: 'auto',
+                        objectFit: 'contain',
+                        margin: '-20px 0 -8px',
+                    }}
+                />
+                <h2 className="auth-form-brand__title">Đăng nhập</h2>
+                <p className="auth-form-brand__subtitle">
+                    Nhập thông tin tài khoản PayFlow của bạn
                 </p>
             </div>
 
@@ -124,7 +121,7 @@ export default function LoginForm() {
                     showIcon
                     closable
                     onClose={() => setErrorMsg(null)}
-                    style={{ marginBottom: 24, borderRadius: 8 }}
+                    style={{ marginBottom: 20, borderRadius: 8 }}
                 />
             )}
 
@@ -141,7 +138,7 @@ export default function LoginForm() {
                 {/* Email */}
                 <Form.Item
                     name="email"
-                    label={<span style={styles.label}>Email</span>}
+                    label={<span style={styles.label}>Email tài khoản</span>}
                     rules={[
                         { required: true, message: 'Vui lòng nhập email!' },
                         { type: 'email', message: 'Email không đúng định dạng!' },
@@ -149,13 +146,13 @@ export default function LoginForm() {
                 >
                     <Input
                         prefix={<MailOutlined style={styles.inputIcon} />}
-                        placeholder="you@example.com"
+                        placeholder="tenban@email.com"
                         autoComplete="email"
                         style={styles.input}
                     />
                 </Form.Item>
 
-                {/* Password — autocomplete="current-password" per UX guideline */}
+                {/* Password */}
                 <Form.Item
                     name="password"
                     label={<span style={styles.label}>Mật khẩu</span>}
@@ -166,14 +163,14 @@ export default function LoginForm() {
                 >
                     <Input.Password
                         prefix={<LockOutlined style={styles.inputIcon} />}
-                        placeholder="Nhập mật khẩu"
+                        placeholder="Nhập mật khẩu của bạn"
                         autoComplete="current-password"
                         style={styles.input}
                     />
                 </Form.Item>
 
                 {/* Remember + Forgot */}
-                <Form.Item style={{ marginBottom: 24 }}>
+                <Form.Item style={{ marginBottom: 20 }}>
                     <div style={styles.utilRow}>
                         <Form.Item name="remember" valuePropName="checked" noStyle>
                             <Checkbox>
@@ -186,7 +183,7 @@ export default function LoginForm() {
                     </div>
                 </Form.Item>
 
-                {/* Submit — Accent/CTA color per design system */}
+                {/* Submit CTA Button */}
                 <Form.Item style={{ marginBottom: 16 }}>
                     <Button
                         type="primary"
@@ -195,17 +192,17 @@ export default function LoginForm() {
                         loading={loading}
                         style={styles.submitBtn}
                     >
-                        Đăng nhập
+                        Đăng nhập ngay
                     </Button>
                 </Form.Item>
             </Form>
 
             {/* Divider */}
-            <Divider plain style={{ borderColor: '#e2e8f0', margin: '4px 0 20px' }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>hoặc tiếp tục với</span>
+            <Divider plain style={{ borderColor: '#e2e8f0', margin: '8px 0 20px' }}>
+                <span style={{ fontSize: 13, color: '#737686' }}>hoặc tiếp tục với</span>
             </Divider>
 
-            {/* Google OAuth — uses CSS class for hover/active states */}
+            {/* Google OAuth Button */}
             <button type="button" className="login-social-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -225,13 +222,13 @@ export default function LoginForm() {
                         fill="#EA4335"
                     />
                 </svg>
-                <span>Google</span>
+                <span>Đăng nhập với Google</span>
             </button>
 
-            {/* Register link */}
+            {/* Register Link */}
             <div style={{ textAlign: 'center', marginTop: 24 }}>
                 <span style={styles.registerText}>
-                    Chưa có tài khoản?{' '}
+                    Chưa có tài khoản PayFlow?{' '}
                     <Link to="/register" style={styles.registerLink}>
                         Đăng ký ngay
                     </Link>
@@ -241,20 +238,22 @@ export default function LoginForm() {
     );
 }
 
-/* ---------- Inline styles (non-responsive, token-driven) ---------- */
+/* ---------- Inline styles (token-driven) ---------- */
 const styles: Record<string, React.CSSProperties> = {
     label: {
         fontSize: 13,
         fontWeight: 600,
-        color: '#334155',
+        color: '#1a1c1e',
     },
     input: {
         borderRadius: 8,
         height: 44,
-        fontSize: 15,
+        fontSize: 14,
+        borderColor: '#e2e8f0',
     },
     inputIcon: {
-        color: '#94a3b8',
+        color: '#737686',
+        marginRight: 4,
     },
     utilRow: {
         display: 'flex',
@@ -263,30 +262,32 @@ const styles: Record<string, React.CSSProperties> = {
     },
     checkboxLabel: {
         fontSize: 13,
-        color: '#475569',
+        color: '#424654',
     },
     forgotLink: {
         fontSize: 13,
-        fontWeight: 500,
-        color: 'var(--color-accent)',
+        fontWeight: 600,
+        color: '#0055d4',
     },
     submitBtn: {
         height: 46,
         borderRadius: 8,
         fontWeight: 600,
         fontSize: 15,
-        background: 'var(--color-accent)',
+        backgroundColor: '#0055d4',
         border: 'none',
+        boxShadow: '0 4px 12px rgba(0, 85, 212, 0.25)',
         cursor: 'pointer',
         transition: 'all 200ms ease',
-        fontFamily: "'IBM Plex Sans', sans-serif",
+        fontFamily: "'Inter', sans-serif",
     },
     registerText: {
         fontSize: 13,
-        color: '#64748b',
+        color: '#424654',
     },
     registerLink: {
-        color: 'var(--color-accent)',
+        color: '#0055d4',
         fontWeight: 600,
+        textDecoration: 'none',
     },
 };

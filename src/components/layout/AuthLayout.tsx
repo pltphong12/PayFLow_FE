@@ -1,66 +1,53 @@
 import { type ReactNode } from 'react';
-import { WalletOutlined } from '@ant-design/icons';
+import heroImg from '../../assets/payflow_brand_logo.png';
 
 interface AuthLayoutProps {
     children: ReactNode;
+    headline?: string;
+    subHeadline?: string;
 }
 
 /* ================================================================
- *  AuthLayout — Responsive 2-column auth layout
+ *  AuthLayout — Responsive 2-column Auth Layout (Stitch Design System)
  *
- *  Design system: PayFlow (MASTER.md)
- *  Responsive: 375px / 768px / 1024px / 1440px
- *
- *  Desktop (>1024px): 2-column — branding | form
- *  Tablet  (768-1024): 2-column — narrower branding | form
- *  Mobile  (<768px):  1-column — mobile header + form only
+ *  Left: Modern Financial Hero, Local Assets Illustration & Badges
+ *  Right: Authentication Form (Login / Register)
  * ================================================================ */
-export default function AuthLayout({ children }: AuthLayoutProps) {
+export default function AuthLayout({
+    children,
+    headline = 'Thanh toán an toàn, bảo mật tuyệt đối',
+    subHeadline = 'Trải nghiệm ứng dụng tài chính thông minh, bảo mật cấp độ ngân hàng với PayFlow.',
+}: AuthLayoutProps) {
     return (
         <div className="auth-wrapper">
-            {/* ---- MOBILE HEADER — visible <768px only ---- */}
-            <div className="auth-mobile-header">
-                <div className="auth-logo__icon">
-                    <WalletOutlined style={{ fontSize: 18, color: 'var(--color-on-primary)' }} />
-                </div>
-                <span className="auth-mobile-header__text">PayFlow</span>
-            </div>
-
-            {/* ---- LEFT PANEL — Branding (hidden on mobile) ---- */}
+            {/* ---- LEFT PANEL — Branding & Illustration ---- */}
             <div className="auth-left">
                 <div className="auth-left__grid" />
-                <div className="auth-left__accent-line" />
 
                 <div className="auth-left__content">
-                    {/* Logo */}
-                    <div className="auth-logo">
-                        <div className="auth-logo__icon">
-                            <WalletOutlined style={{ fontSize: 22, color: 'var(--color-on-primary)' }} />
-                        </div>
-                        <span className="auth-logo__text">PayFlow</span>
+                    {/* Main Headline */}
+                    <h1 className="auth-headline">{headline}</h1>
+
+                    {/* Subtitle */}
+                    <p className="auth-sub-headline">{subHeadline}</p>
+
+                    {/* Illustration Card from local assets */}
+                    <div className="auth-left__illustration">
+                        <img
+                            src={heroImg}
+                            alt="PayFlow Secure Digital Banking"
+                            loading="eager"
+                        />
                     </div>
-
-                    {/* Headline */}
-                    <h1 className="auth-headline">
-                        Nền tảng thanh toán số
-                        <br />
-                        <span className="auth-headline__accent">đáng tin cậy.</span>
-                    </h1>
-
-                    <p className="auth-sub-headline">
-                        Quản lý ví, chuyển tiền &amp; thanh toán hóa đơn
-                        <br />
-                        — nhanh chóng, an toàn, minh bạch.
-                    </p>
                 </div>
 
-                {/* Bottom copyright */}
-                <span className="auth-left__copyright">
-                    © 2026 PayFlow. All rights reserved.
-                </span>
+                {/* Footer Copyright */}
+                <div className="auth-left__copyright">
+                    © 2026 PayFlow Inc. Tất cả các quyền được bảo lưu.
+                </div>
             </div>
 
-            {/* ---- RIGHT PANEL — Form ---- */}
+            {/* ---- RIGHT PANEL — Form Area ---- */}
             <div className="auth-right">
                 <div className="auth-right__container">{children}</div>
             </div>

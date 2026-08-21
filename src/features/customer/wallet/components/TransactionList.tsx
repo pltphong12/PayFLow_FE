@@ -6,19 +6,6 @@ import {
 import { Button, Spin, Empty } from 'antd';
 import type { LedgerEntry } from '../types/wallet.types';
 
-/* ================================================================
- *  TransactionList — Lịch sử giao dịch ledger (premium fintech style)
- *
- *  Design system: PayFlow MASTER.md + ui-ux-pro-max
- *  - CREDIT (vào): #10B981 + icon mũi tên xuống, dấu +
- *  - DEBIT  (ra):  #EF4444 + icon mũi tên lên, dấu -
- *  - Card surface: white với subtle shadow (elevation layer)
- *  - Hover state: background shift (micro-interaction)
- *  - Divider separator giữa các items
- *  - "Xem thêm" dạng ghost button căn giữa
- *  - 8dp spacing rhythm (UX checklist)
- * ================================================================ */
-
 interface TransactionListProps {
     entries: LedgerEntry[];
     loading: boolean;
@@ -31,25 +18,16 @@ function formatVND(amount: number): string {
     return new Intl.NumberFormat('vi-VN').format(amount);
 }
 
-function timeAgo(dateStr: string): string {
-    const diffMs = Date.now() - new Date(dateStr).getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) return 'Vừa xong';
-    if (diffMin < 60) return `${diffMin} phút trước`;
-    if (diffHour < 24) return `${diffHour} giờ trước`;
-    if (diffDay < 7) return `${diffDay} ngày trước`;
-
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-    });
+function formatDateTime(dateStr: string): string {
+    const d = new Date(dateStr);
+    const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `${time} ${date}`;
 }
 
+/* ================================================================
+ *  TransactionList — Stitch PayFlow Financial Core Transaction List
+ * ================================================================ */
 export default function TransactionList({
     entries,
     loading,
@@ -61,7 +39,7 @@ export default function TransactionList({
         return (
             <div style={styles.card}>
                 <div style={styles.centered}>
-                    <Spin indicator={<LoadingOutlined style={{ fontSize: 28, color: 'var(--color-accent)' }} spin />} />
+                    <Spin indicator={<LoadingOutlined style={{ fontSize: 28, color: '#0055d4' }} spin />} />
                     <p style={styles.loadingText}>Đang tải lịch sử giao dịch…</p>
                 </div>
             </div>
@@ -70,7 +48,7 @@ export default function TransactionList({
 
     return (
         <div style={styles.card}>
-            {/* Section header */}
+            {/* Header */}
             <div style={styles.header}>
                 <h3 style={styles.headerTitle}>Lịch sử giao dịch</h3>
                 {entries.length > 0 && (
@@ -83,7 +61,7 @@ export default function TransactionList({
                 <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                     description={
-                        <span style={{ color: '#94a3b8', fontSize: 14 }}>
+                        <span style={{ color: '#737686', fontSize: 14 }}>
                             Chưa có giao dịch nào
                         </span>
                     }
@@ -91,68 +69,62 @@ export default function TransactionList({
                 />
             )}
 
-            {/* Transaction entries */}
+            {/* Transaction List */}
             {entries.length > 0 && (
                 <div style={styles.list}>
                     {entries.map((entry, idx) => {
                         const isCredit = entry.entryType === 'CREDIT';
                         const isLast = idx === entries.length - 1;
+
                         return (
                             <div key={entry.id}>
-                                <div
-                                    style={styles.item}
-                                    className="txn-item"
-                                    role="listitem"
-                                >
-                                    {/* Type icon */}
-                                    <div
-                                        style={{
-                                            ...styles.iconWrap,
-                                            background: isCredit
-                                                ? 'rgba(16,185,129,0.1)'
-                                                : 'rgba(239,68,68,0.1)',
-                                        }}
-                                        aria-hidden="true"
-                                    >
-                                        {isCredit
-                                            ? <ArrowDownOutlined style={{ color: '#10B981', fontSize: 15 }} />
-                                            : <ArrowUpOutlined style={{ color: '#EF4444', fontSize: 15 }} />
-                                        }
+                                <div style={styles.item} className="txn-item">
+                                    {/* Left: Icon and info */}
+                                    <div style={styles.itemLeft}>
+                                        <div
+                                            style={{
+                                                ...styles.iconWrap,
+                                                background: isCredit ? '#e8fdf0' : '#ffdad6',
+                                                color: isCredit ? '#006d36' : '#ba1a1a',
+                                            }}
+                                        >
+                                            {isCredit ? (
+                                                <ArrowDownOutlined style={{ fontSize: 16 }} />
+                                            ) : (
+                                                <ArrowUpOutlined style={{ fontSize: 16 }} />
+                                            )}
+                                        </div>
+                                        <div style={styles.infoCol}>
+                                            <span style={styles.title}>
+                                                {isCredit ? 'Nạp tiền vào ví' : 'Chuyển tiền / Thanh toán'}
+                                            </span>
+                                            <span style={styles.time}>{formatDateTime(entry.createdAt)}</span>
+                                        </div>
                                     </div>
 
-                                    {/* Info col */}
-                                    <div style={styles.infoCol}>
-                                        <span style={styles.typeLabel}>
-                                            {isCredit ? 'Tiền vào' : 'Tiền ra'}
-                                        </span>
-                                        <span style={styles.timeLabel}>{timeAgo(entry.createdAt)}</span>
-                                    </div>
-
-                                    {/* Amount col */}
+                                    {/* Right: Amount */}
                                     <div style={styles.amountCol}>
                                         <span
                                             style={{
-                                                ...styles.amountText,
-                                                color: isCredit ? '#10B981' : '#EF4444',
+                                                ...styles.amount,
+                                                color: isCredit ? '#006d36' : '#ba1a1a',
                                             }}
-                                            aria-label={`${isCredit ? 'Nhận' : 'Gửi'} ${formatVND(entry.amount)} đồng`}
                                         >
                                             {isCredit ? '+' : '−'}{formatVND(entry.amount)}&thinsp;₫
                                         </span>
-                                        <span style={styles.balanceAfterLabel}>
-                                            Số dư: {formatVND(entry.balanceAfter)}&thinsp;₫
+                                        <span style={styles.balanceAfter}>
+                                            Dư: {formatVND(entry.balanceAfter)}&thinsp;₫
                                         </span>
                                     </div>
                                 </div>
-                                {/* Separator */}
-                                {!isLast && <div style={styles.separator} />}
+                                {!isLast && <div style={styles.divider} />}
                             </div>
                         );
                     })}
                 </div>
             )}
 
-            {/* Load more */}
+            {/* Load more button */}
             {hasMore && (
                 <div style={styles.loadMoreWrap}>
                     <Button
@@ -160,9 +132,8 @@ export default function TransactionList({
                         loading={loadingMore}
                         onClick={onLoadMore}
                         style={styles.loadMoreBtn}
-                        id="btn-load-more-ledger"
                     >
-                        {loadingMore ? 'Đang tải…' : 'Xem thêm giao dịch'}
+                        Xem thêm giao dịch
                     </Button>
                 </div>
             )}
@@ -173,120 +144,117 @@ export default function TransactionList({
 /* ---------- Inline styles ---------- */
 const styles: Record<string, React.CSSProperties> = {
     card: {
-        background: '#FFFFFF',
+        background: '#ffffff',
+        border: '1px solid #eeeef0',
         borderRadius: 16,
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-        border: '1px solid #F1F5F9',
-    },
-    header: {
+        padding: '20px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '18px 20px 14px',
-        borderBottom: '1px solid #F8FAFC',
-    },
-    headerTitle: {
-        fontSize: 15,
-        fontWeight: 700,
-        color: '#0F172A',
-        margin: 0,
-        fontFamily: "'IBM Plex Sans', sans-serif",
-        letterSpacing: '-0.01em',
-    },
-    headerCount: {
-        fontSize: 12,
-        fontWeight: 500,
-        color: '#94A3B8',
-        background: '#F8FAFC',
-        padding: '2px 8px',
-        borderRadius: 20,
-        border: '1px solid #E2E8F0',
+        flexDirection: 'column',
     },
     centered: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 12,
-        padding: '40px 20px',
+        justifyContent: 'center',
+        padding: '48px 0',
     },
     loadingText: {
-        color: '#94A3B8',
-        fontSize: 13,
+        marginTop: 12,
+        fontSize: 14,
+        color: '#737686',
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottom: '1px solid #f1f3f6',
+    },
+    headerTitle: {
+        fontSize: 17,
+        fontWeight: 700,
+        color: '#1a1c1e',
         margin: 0,
+        letterSpacing: '-0.01em',
+    },
+    headerCount: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: '#0055d4',
     },
     list: {
-        padding: '4px 0',
+        display: 'flex',
+        flexDirection: 'column',
     },
     item: {
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '14px 20px',
+        justifyContent: 'space-between',
+        padding: '10px 8px',
+        borderRadius: 10,
         transition: 'background 150ms ease',
-        cursor: 'default',
+        cursor: 'pointer',
+    },
+    itemLeft: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
     },
     iconWrap: {
-        width: 38,
-        height: 38,
-        borderRadius: 10,
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
     },
     infoCol: {
-        flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
-        minWidth: 0,
+        gap: 2,
     },
-    typeLabel: {
+    title: {
         fontSize: 14,
         fontWeight: 600,
-        color: '#0F172A',
-        letterSpacing: '-0.01em',
+        color: '#1a1c1e',
     },
-    timeLabel: {
+    time: {
         fontSize: 12,
-        color: '#94A3B8',
-        fontWeight: 400,
+        color: '#737686',
     },
     amountCol: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
-        gap: 3,
-        flexShrink: 0,
+        gap: 2,
     },
-    amountText: {
+    amount: {
         fontSize: 15,
         fontWeight: 700,
-        fontFamily: "'IBM Plex Sans', sans-serif",
-        letterSpacing: '-0.01em',
+        fontFamily: "'Inter', sans-serif",
     },
-    balanceAfterLabel: {
+    balanceAfter: {
         fontSize: 11,
-        color: '#CBD5E1',
-        fontWeight: 400,
+        color: '#737686',
     },
-    separator: {
+    divider: {
         height: 1,
-        background: '#F8FAFC',
-        margin: '0 20px',
+        background: '#f8fafc',
+        margin: '2px 0',
     },
     loadMoreWrap: {
-        padding: '12px 20px 16px',
-        borderTop: '1px solid #F8FAFC',
-        display: 'flex',
-        justifyContent: 'center',
+        textAlign: 'center',
+        paddingTop: 16,
+        marginTop: 8,
+        borderTop: '1px solid #f1f3f6',
     },
     loadMoreBtn: {
-        color: 'var(--color-accent)',
+        fontSize: 13,
         fontWeight: 600,
-        fontSize: 14,
-        height: 36,
-        letterSpacing: '0.01em',
+        color: '#0055d4',
+        borderRadius: 8,
     },
 };

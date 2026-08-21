@@ -13,6 +13,7 @@ import {
     LockOutlined,
     UserOutlined,
 } from '@ant-design/icons';
+import payflowLogo from '../../../assets/payflow_brand_logo.png';
 
 import authApi from '../services/authApi';
 import { saveAuth } from '../../../stores/authStore';
@@ -28,19 +29,7 @@ interface RegisterFormValues extends RegisterRequest {
 
 /* ================================================================
  *  RegisterForm — PayFlow Registration
- *
- *  Design system: PayFlow MASTER.md
- *  - Primary:  #F59E0B (Gold trust)  → focus ring
- *  - Accent:   #8B5CF6 (Purple tech) → CTA button
- *  - Font:     IBM Plex Sans
- *  - Responsive: 375px / 768px / 1024px (via CSS classes)
- *
- *  UX compliance (ux-guidelines):
- *  - autocomplete="new-password" → allow paste & password managers
- *  - Loading → success/error feedback
- *  - Proper <label> via Antd Form (not placeholder-only)
- *  - Password min 8 chars (khớp backend @Size(min=8, max=100))
- *  - 409 conflict → email đã tồn tại
+ *  Design System: PayFlow Financial Core (Stitch)
  * ================================================================ */
 export default function RegisterForm() {
     const [form] = Form.useForm<RegisterFormValues>();
@@ -77,14 +66,12 @@ export default function RegisterForm() {
                 const loginBody = loginRes.data;
 
                 if (!loginBody.success) {
-                    // Register OK nhưng login fail → hướng dẫn login thủ công
                     message.success('Đăng ký thành công! Vui lòng đăng nhập.');
                     navigate('/login', { replace: true });
                     return;
                 }
                 authData = loginBody.data;
             } catch {
-                // Register OK nhưng login fail → hướng dẫn login thủ công
                 message.success('Đăng ký thành công! Vui lòng đăng nhập.');
                 navigate('/login', { replace: true });
                 return;
@@ -98,7 +85,6 @@ export default function RegisterForm() {
             try {
                 const userRes = await authApi.getCurrentUser();
                 if (!userRes.data.success) {
-                    // Fallback: dùng thông tin từ register response
                     message.success('Đăng ký thành công! Vui lòng đăng nhập.');
                     localStorage.removeItem('access_token');
                     navigate('/login', { replace: true });
@@ -112,7 +98,7 @@ export default function RegisterForm() {
                 return;
             }
 
-            /* Bước 5: Lưu đầy đủ auth + user vào store (remember=false cho register) */
+            /* Bước 5: Lưu đầy đủ auth + user vào store */
             const userInfo = {
                 id: userProfile.id,
                 email: userProfile.email,
@@ -122,7 +108,7 @@ export default function RegisterForm() {
             saveAuth(authData, userInfo, false);
             message.success('Đăng ký thành công! Chào mừng bạn đến với PayFlow.');
 
-            /* Bước 6: Điều hướng vào /wallet (register luôn tạo role USER) */
+            /* Bước 6: Điều hướng vào /wallet */
             navigate('/wallet', { replace: true });
         } catch (err: unknown) {
             const axiosErr = err as AxiosError<ApiResponse>;
@@ -130,7 +116,7 @@ export default function RegisterForm() {
             const serverMsg = axiosErr.response?.data?.message;
 
             if (status === 409) {
-                setErrorMsg('Email đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.');
+                setErrorMsg('Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.');
             } else {
                 setErrorMsg(serverMsg || 'Không thể kết nối máy chủ. Vui lòng thử lại sau.');
             }
@@ -141,11 +127,21 @@ export default function RegisterForm() {
 
     return (
         <div>
-            {/* ---- Header ---- */}
-            <div style={{ marginBottom: 32 }}>
-                <h2 className="login-form-header__title">Đăng ký tài khoản</h2>
-                <p className="login-form-header__subtitle">
-                    Tạo tài khoản PayFlow để bắt đầu sử dụng.
+            {/* ---- Brand Header ---- */}
+            <div className="auth-form-brand">
+                <img
+                    src={payflowLogo}
+                    alt="PayFlow Logo"
+                    style={{
+                        height: 180,
+                        width: 'auto',
+                        objectFit: 'contain',
+                        margin: '-20px 0 -8px',
+                    }}
+                />
+                <h2 className="auth-form-brand__title">Tạo tài khoản mới</h2>
+                <p className="auth-form-brand__subtitle">
+                    Đăng ký ví điện tử PayFlow nhanh chóng chỉ trong 1 phút
                 </p>
             </div>
 
@@ -157,7 +153,7 @@ export default function RegisterForm() {
                     showIcon
                     closable
                     onClose={() => setErrorMsg(null)}
-                    style={{ marginBottom: 24, borderRadius: 8 }}
+                    style={{ marginBottom: 20, borderRadius: 8 }}
                 />
             )}
 
@@ -174,15 +170,15 @@ export default function RegisterForm() {
                 {/* Họ tên */}
                 <Form.Item
                     name="fullName"
-                    label={<span style={styles.label}>Họ tên</span>}
+                    label={<span style={styles.label}>Họ và tên</span>}
                     rules={[
-                        { required: true, message: 'Vui lòng nhập họ tên!' },
+                        { required: true, message: 'Vui lòng nhập họ và tên!' },
                         { min: 2, message: 'Họ tên tối thiểu 2 ký tự!' },
                     ]}
                 >
                     <Input
                         prefix={<UserOutlined style={styles.inputIcon} />}
-                        placeholder="Nguyễn Văn Anh"
+                        placeholder="Ví dụ: Nguyễn Văn An"
                         autoComplete="name"
                         style={styles.input}
                     />
@@ -191,7 +187,7 @@ export default function RegisterForm() {
                 {/* Email */}
                 <Form.Item
                     name="email"
-                    label={<span style={styles.label}>Email</span>}
+                    label={<span style={styles.label}>Địa chỉ Email</span>}
                     rules={[
                         { required: true, message: 'Vui lòng nhập email!' },
                         { type: 'email', message: 'Email không đúng định dạng!' },
@@ -199,7 +195,7 @@ export default function RegisterForm() {
                 >
                     <Input
                         prefix={<MailOutlined style={styles.inputIcon} />}
-                        placeholder="you@example.com"
+                        placeholder="tenban@email.com"
                         autoComplete="email"
                         style={styles.input}
                     />
@@ -214,14 +210,14 @@ export default function RegisterForm() {
                         { min: 8, message: 'Mật khẩu tối thiểu 8 ký tự!' },
                     ]}
                     extra={
-                        <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                            Mật khẩu phải có ít nhất 8 ký tự
+                        <span style={{ fontSize: 12, color: '#737686' }}>
+                            Tối thiểu 8 ký tự để đảm bảo an toàn tài khoản
                         </span>
                     }
                 >
                     <Input.Password
                         prefix={<LockOutlined style={styles.inputIcon} />}
-                        placeholder="Nhập mật khẩu"
+                        placeholder="Nhập mật khẩu an toàn"
                         autoComplete="new-password"
                         style={styles.input}
                     />
@@ -233,14 +229,14 @@ export default function RegisterForm() {
                     label={<span style={styles.label}>Xác nhận mật khẩu</span>}
                     dependencies={['password']}
                     rules={[
-                        { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
+                        { required: true, message: 'Vui lòng xác nhận lại mật khẩu!' },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
                                 if (!value || getFieldValue('password') === value) {
                                     return Promise.resolve();
                                 }
                                 return Promise.reject(
-                                    new Error('Mật khẩu xác nhận không khớp!'),
+                                    new Error('Mật khẩu xác nhận không trùng khớp!'),
                                 );
                             },
                         }),
@@ -248,7 +244,7 @@ export default function RegisterForm() {
                 >
                     <Input.Password
                         prefix={<LockOutlined style={styles.inputIcon} />}
-                        placeholder="Nhập lại mật khẩu"
+                        placeholder="Nhập lại mật khẩu ở trên"
                         autoComplete="new-password"
                         style={styles.input}
                     />
@@ -263,17 +259,17 @@ export default function RegisterForm() {
                         loading={loading}
                         style={styles.submitBtn}
                     >
-                        Đăng ký
+                        Tạo tài khoản PayFlow
                     </Button>
                 </Form.Item>
             </Form>
 
             {/* Divider */}
-            <Divider plain style={{ borderColor: '#e2e8f0', margin: '4px 0 20px' }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>hoặc tiếp tục với</span>
+            <Divider plain style={{ borderColor: '#e2e8f0', margin: '8px 0 20px' }}>
+                <span style={{ fontSize: 13, color: '#737686' }}>hoặc đăng ký bằng</span>
             </Divider>
 
-            {/* Google OAuth — placeholder */}
+            {/* Google OAuth Button */}
             <button type="button" className="login-social-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
                     <path
@@ -293,13 +289,13 @@ export default function RegisterForm() {
                         fill="#EA4335"
                     />
                 </svg>
-                <span>Google</span>
+                <span>Đăng ký với Google</span>
             </button>
 
-            {/* Login link */}
+            {/* Login Link */}
             <div style={{ textAlign: 'center', marginTop: 24 }}>
                 <span style={styles.registerText}>
-                    Đã có tài khoản?{' '}
+                    Đã có tài khoản PayFlow?{' '}
                     <Link to="/login" style={styles.registerLink}>
                         Đăng nhập ngay
                     </Link>
@@ -309,38 +305,42 @@ export default function RegisterForm() {
     );
 }
 
-/* ---------- Inline styles (non-responsive, token-driven) ---------- */
+/* ---------- Inline styles (token-driven) ---------- */
 const styles: Record<string, React.CSSProperties> = {
     label: {
         fontSize: 13,
         fontWeight: 600,
-        color: '#334155',
+        color: '#1a1c1e',
     },
     input: {
         borderRadius: 8,
         height: 44,
-        fontSize: 15,
+        fontSize: 14,
+        borderColor: '#e2e8f0',
     },
     inputIcon: {
-        color: '#94a3b8',
+        color: '#737686',
+        marginRight: 4,
     },
     submitBtn: {
         height: 46,
         borderRadius: 8,
         fontWeight: 600,
         fontSize: 15,
-        background: 'var(--color-accent)',
+        backgroundColor: '#0055d4',
         border: 'none',
+        boxShadow: '0 4px 12px rgba(0, 85, 212, 0.25)',
         cursor: 'pointer',
         transition: 'all 200ms ease',
-        fontFamily: "'IBM Plex Sans', sans-serif",
+        fontFamily: "'Inter', sans-serif",
     },
     registerText: {
         fontSize: 13,
-        color: '#64748b',
+        color: '#424654',
     },
     registerLink: {
-        color: 'var(--color-accent)',
+        color: '#0055d4',
         fontWeight: 600,
+        textDecoration: 'none',
     },
 };

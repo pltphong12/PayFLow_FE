@@ -7,7 +7,10 @@ import RegisterForm from './components/RegisterForm';
  * ================================================================ */
 export default function RegisterPage() {
   return (
-    <AuthLayout>
+    <AuthLayout
+      headline="Khởi đầu thanh toán thông minh cùng PayFlow"
+      subHeadline="Mở tài khoản ví điện tử bảo mật chuẩn ngân hàng chỉ trong 1 phút, hoàn toàn miễn phí."
+    >
       <RegisterForm />
     </AuthLayout>
   );

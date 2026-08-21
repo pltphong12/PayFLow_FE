@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Alert, Skeleton, message } from 'antd';
+import { Alert, Skeleton } from 'antd';
 import type { AxiosError } from 'axios';
 import authApi from './services/authApi';
 import type { UserProfileResponse } from './types/auth.types';

@@ -1,25 +1,17 @@
 import { type ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Popconfirm } from 'antd';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Popconfirm, Tooltip } from 'antd';
 import {
+    HomeOutlined,
     WalletOutlined,
-    QrcodeOutlined,
-    HistoryOutlined,
+    TagOutlined,
     UserOutlined,
+    BellOutlined,
     LogoutOutlined,
 } from '@ant-design/icons';
 import { getUser } from '../../stores/authStore';
 import { useLogout } from '../../features/auth/hooks/useLogout';
-
-/* ================================================================
- *  CustomerLayout — Mobile-first wallet app layout
- *
- *  Design system: PayFlow MASTER.md
- *  - Mobile (<768px): Bottom Navigation Bar cố định + content scrollable
- *  - Desktop (>=768px): Header đơn giản + centered content (max-width 480px)
- *  - Bottom nav tabs: Ví · Quét QR · Lịch sử · Tài khoản
- *  - Safe-area-inset cho iPhone notch
- * ================================================================ */
+import payflowLogo from '../../assets/payflow_brand_logo.png';
 
 interface CustomerLayoutProps {
     children: ReactNode;
@@ -34,33 +26,93 @@ interface NavTab {
 }
 
 const NAV_TABS: NavTab[] = [
-    { key: 'wallet', label: 'Ví', icon: <WalletOutlined />, path: '/wallet' },
-    { key: 'qr-scan', label: 'Quét QR', icon: <QrcodeOutlined />, path: '/qr-scan', disabled: true },
-    { key: 'history', label: 'Lịch sử', icon: <HistoryOutlined />, path: '/wallet', disabled: true },
-    { key: 'account', label: 'Tài khoản', icon: <UserOutlined />, path: '/profile' },
+    { key: 'home', label: 'Trang chủ', icon: <HomeOutlined />, path: '/wallet' },
+    { key: 'finance', label: 'Tài chính', icon: <WalletOutlined />, path: '/wallet' },
+    { key: 'promos', label: 'Ưu đãi', icon: <TagOutlined />, path: '/wallet' },
+    { key: 'profile', label: 'Tài khoản', icon: <UserOutlined />, path: '/profile' },
 ];
 
+/* ================================================================
+ *  CustomerLayout — Stitch PayFlow Dashboard TopAppBar & BottomBar
+ * ================================================================ */
 export default function CustomerLayout({ children }: CustomerLayoutProps) {
     const navigate = useNavigate();
     const location = useLocation();
     const user = getUser();
     const { handleLogout, loading } = useLogout();
 
+    const userInitial = user?.fullName
+        ? user.fullName.trim().charAt(0).toUpperCase()
+        : 'U';
+
     return (
         <div className="customer-wrapper">
             {/* ---- DESKTOP HEADER (>=768px) ---- */}
             <header className="customer-header">
                 <div className="customer-header__inner">
-                    <div className="customer-header__brand">
-                        <div className="customer-header__logo-icon">
-                            <WalletOutlined style={{ fontSize: 16, color: 'var(--color-on-primary)' }} />
-                        </div>
-                        <span className="customer-header__logo-text">PayFlow</span>
+                    {/* Brand Logo */}
+                    <div
+                        className="customer-header__brand"
+                        onClick={() => navigate('/wallet')}
+                    >
+                        <img
+                            src={payflowLogo}
+                            alt="PayFlow"
+                            className="customer-header__logo-img"
+                        />
                     </div>
+
+                    {/* Navigation Links */}
+                    <nav className="customer-header__nav">
+                        {NAV_TABS.map((tab) => {
+                            const isActive =
+                                tab.key === 'home'
+                                    ? location.pathname === '/wallet'
+                                    : tab.key === 'profile'
+                                    ? location.pathname === '/profile'
+                                    : false;
+
+                            return (
+                                <Link
+                                    key={tab.key}
+                                    to={tab.path}
+                                    className={`customer-header__nav-item${
+                                        isActive ? ' customer-header__nav-item--active' : ''
+                                    }`}
+                                >
+                                    {tab.icon}
+                                    <span>{tab.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+
+                    {/* Right User Controls */}
                     <div className="customer-header__right">
-                        <span className="customer-header__user">
-                            {user?.fullName ?? 'Người dùng'}
-                        </span>
+                        {/* Notifications */}
+                        <Tooltip title="Thông báo">
+                            <button
+                                type="button"
+                                className="customer-header__notify-btn"
+                                aria-label="Thông báo"
+                            >
+                                <BellOutlined />
+                            </button>
+                        </Tooltip>
+
+                        {/* User Profile Pill */}
+                        <div
+                            className="customer-header__user-pill"
+                            onClick={() => navigate('/profile')}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <div className="customer-header__avatar">{userInitial}</div>
+                            <span className="customer-header__user-name">
+                                {user?.fullName ?? 'Người dùng'}
+                            </span>
+                        </div>
+
+                        {/* Logout Button */}
                         <Popconfirm
                             title="Đăng xuất"
                             description="Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?"
@@ -85,16 +137,36 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
 
             {/* ---- MOBILE HEADER (<768px) ---- */}
             <div className="customer-mobile-header">
-                <div className="customer-mobile-header__brand">
-                    <div className="customer-header__logo-icon">
-                        <WalletOutlined style={{ fontSize: 14, color: 'var(--color-on-primary)' }} />
-                    </div>
-                    <span className="customer-mobile-header__text">PayFlow</span>
+                <div
+                    className="customer-mobile-header__brand"
+                    onClick={() => navigate('/wallet')}
+                    style={{ display: 'flex', alignItems: 'center', overflow: 'visible' }}
+                >
+                    <img
+                        src={payflowLogo}
+                        alt="PayFlow"
+                        style={{ height: 100, width: 'auto', objectFit: 'contain', margin: '-24px -10px' }}
+                    />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span className="customer-mobile-header__greeting">
-                        Xin chào, {user?.fullName?.split(' ').pop() ?? 'bạn'}
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div
+                        onClick={() => navigate('/profile')}
+                        style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            backgroundColor: '#0055d4',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 13,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {userInitial}
+                    </div>
                     <Popconfirm
                         title="Đăng xuất"
                         description="Bạn có chắc chắn muốn đăng xuất?"
@@ -118,24 +190,27 @@ export default function CustomerLayout({ children }: CustomerLayoutProps) {
 
             {/* ---- MAIN CONTENT ---- */}
             <main className="customer-main">
-                <div className="customer-main__container">
-                    {children}
-                </div>
+                <div className="customer-main__container">{children}</div>
             </main>
 
             {/* ---- BOTTOM NAVIGATION (<768px only) ---- */}
             <nav className="customer-bottom-nav">
                 {NAV_TABS.map((tab) => {
-                    const isActive = location.pathname === tab.path && !tab.disabled;
+                    const isActive =
+                        tab.key === 'home'
+                            ? location.pathname === '/wallet'
+                            : tab.key === 'profile'
+                            ? location.pathname === '/profile'
+                            : false;
+
                     return (
                         <button
                             key={tab.key}
                             type="button"
-                            className={`customer-bottom-nav__tab${isActive ? ' customer-bottom-nav__tab--active' : ''}${tab.disabled ? ' customer-bottom-nav__tab--disabled' : ''}`}
-                            onClick={() => {
-                                if (!tab.disabled) navigate(tab.path);
-                            }}
-                            disabled={tab.disabled}
+                            className={`customer-bottom-nav__tab${
+                                isActive ? ' customer-bottom-nav__tab--active' : ''
+                            }`}
+                            onClick={() => navigate(tab.path)}
                         >
                             <span className="customer-bottom-nav__icon">{tab.icon}</span>
                             <span className="customer-bottom-nav__label">{tab.label}</span>
